@@ -1,7 +1,7 @@
 import scrapy
 import os
 
-class klatkispiderSpider(scrapy.Spider):
+class KlatkiSpider(scrapy.Spider):
     name = "klatkispider"
     allowed_domains = ["otwarteklatki.pl"]
     start_urls = ["https://www.otwarteklatki.pl/blog"]
@@ -27,11 +27,11 @@ class klatkispiderSpider(scrapy.Spider):
             yield response.follow(next_page, self.parse)
 
     def parse_article(self, response):
-        # Extract article title
+        # Extract article title, author, publication date, subheadings and content paragraphs
         title = response.xpath('//h1/text()').get().strip()
-
-        # Extract subheadings, content
-        subheadings = response.xpath('//article/p//strong').getall()
+        author = response.xpath('//div[starts-with(@class,"post-info")]/a/text()').get()
+        publication_date = response.xpath('//div[starts-with(@class,"post-info")]/span').get()
+        subheadings = response.xpath('//article/p//strong/text()').getall()
         content_paragraphs = response.xpath('//div[contains(@class, "post-content")]//p/text()').getall()
 
         # Combine content paragraphs
@@ -40,15 +40,18 @@ class klatkispiderSpider(scrapy.Spider):
         # Bold the subheadings
         formatted_subheadings = [f"**{subheading.strip()}**" for subheading in subheadings]
 
-        # Insert subheadings into the content (for demonstration, after each paragraph)
+        # Build markdown content
         markdown_content = f"# {title}\n\n"
+        if author:
+            markdown_content += f"**Author:** {author}\n\n"
+        if publication_date:
+            markdown_content += f"**Published on:** {publication_date}\n\n"
+
+        # Insert subheadings into the content (for demonstration, after each paragraph)
         for i, paragraph in enumerate(content_paragraphs):
             markdown_content += f"{paragraph.strip()}\n\n"
             if i < len(formatted_subheadings):
                 markdown_content += f"{formatted_subheadings[i]}\n\n"
-
-        # Generate a markdown string
-        markdown_content = f"# {title}\n\n{content}"
 
         # Create a safe filename based on the title
         filename = f"{self.markdown_folder}/{self._safe_filename(title)}.md"
