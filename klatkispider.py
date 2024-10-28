@@ -13,8 +13,8 @@ class KlatkiSpider(scrapy.Spider):
     if not os.path.exists(markdown_folder):
         os.makedirs(markdown_folder)
 
+     # Extract all article links using XPath
     def parse(self, response):
-        # Extract all article links using XPath
         article_links = response.xpath('//div[@class="blog-tile"]//a/@href').getall()
 
         # Follow each article link to scrape the content
