@@ -31,7 +31,7 @@ class KlatkiSpider(scrapy.Spider):
         title = response.xpath('//h1/text()').get().strip()
         author = response.xpath('//div[starts-with(@class,"post-info")]/a/text()').get()
         publication_date = response.xpath('//div[starts-with(@class,"post-info")]/span').get()
-        subheadings = response.xpath('//article/p//strong/text()').getall()
+        subheadings = response.xpath('//div[contains(@class, "post-content")]//strong/text()').getall()
         content_paragraphs = response.xpath('//div[contains(@class, "post-content")]//p/text()').getall()
 
         # Combine content paragraphs
