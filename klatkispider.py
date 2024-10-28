@@ -43,9 +43,9 @@ class KlatkiSpider(scrapy.Spider):
         # Build markdown content
         markdown_content = f"# {title}\n\n"
         if author:
-            markdown_content += f"**Author:** {author}\n\n"
+            markdown_content += f"**Autor:** {author}\n\n"
         if publication_date:
-            markdown_content += f"**Published on:** {publication_date}\n\n"
+            markdown_content += f"**Data publikacji:** {publication_date}\n\n"
 
         # Insert subheadings into the content (for demonstration, after each paragraph)
         for i, paragraph in enumerate(content_paragraphs):
