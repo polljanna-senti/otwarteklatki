@@ -1,3 +1,4 @@
+
 import scrapy
 import os
 
@@ -13,25 +14,23 @@ class KlatkiSpider(scrapy.Spider):
     os.makedirs(markdown_folder, exist_ok=True)
 
     def parse(self, response):
-        # Extract all article links using XPath
+        # Extract all article links using XPaths
         article_links = response.xpath('//div[@class="blog-tile"]//a/@href').getall()
 
         # Follow each article link to scrape the content
         for link in article_links:
             yield response.follow(link, self.parse_article)
 
-        # Pagination - find next page link and follow it if exists
+        # Pagination - find the next page link and follow it if it exists
         next_page = response.xpath('(//div[@class="flex center-xs fs-h3"]/a/@href)[1]').get()
         if next_page:
             yield response.follow(next_page, self.parse)
 
     def parse_article(self, response):
-        # Extract article title, author, publication date, subheadings and content paragraphs
+        # Extract the article title, author and publication date
         title = response.xpath('//h1/text()').get().strip()
         author = response.xpath('//div[starts-with(@class,"post-info")]/a/text()').get()
         publication_date = response.xpath('//div[starts-with(@class,"post-info")]/span/text()').get()
-        subheadings = response.xpath('//div[contains(@class, "post-content")]//strong/text()').getall()
-        content_paragraphs = response.xpath('//div[contains(@class, "post-content")]//p/text()').getall()
 
         # Ensure all fields are non-empty
         author = author if author else "N/A"
@@ -42,15 +41,23 @@ class KlatkiSpider(scrapy.Spider):
         metadata_table += "|--------------------|--------------------|--------------------|--------------------|\n"
         metadata_table += f"| {title} | {response.url} | {author} | {publication_date} |\n"
 
-        # Build the article content section in Markdown
+        # Extract the article content, handling subheadings and paragraphs together
+        content_nodes = response.xpath('//div[contains(@class, "post-content")]/*')
         article_markdown = f"# {title}\n\n"
-        for i, paragraph in enumerate(content_paragraphs):
-            article_markdown += f"{paragraph.strip()}\n\n"
-            if i < len(subheadings):
-                article_markdown += f"**{subheadings[i].strip()}**\n\n"
+
+        for node in content_nodes:
+            # Check if the node is a bold subheading (strong tag)
+            if node.root.tag == 'strong':
+                bold_text = node.xpath('text()').get().strip()
+                article_markdown += f"**{bold_text}** "  # Add inline bold text
+            else:
+                # Treat as a paragraph and ensure proper formatting
+                paragraph_text = node.xpath('string(.)').get()
+                if paragraph_text:
+                    article_markdown += f"{paragraph_text.strip()}\n\n"
 
         # Combine metadata table and article content
-        full_markdown = metadata_table + "\n\n" + article_markdown
+        full_markdown = metadata_table + "\n\n" + article_markdown.strip()
 
         # Create a safe filename based on the title
         filename = f"{self.markdown_folder}/{self._safe_filename(title)}.md"
