@@ -3,10 +3,14 @@
 # See documentation in:
 # https://docs.scrapy.org/en/latest/topics/items.html
 
+# File: items.py
+
 import scrapy
 
-
-class OtwarteklatkiItem(scrapy.Item):
-    # define the fields for your item here like:
-    # name = scrapy.Field()
-    pass
+class ArticleItem(scrapy.Item):
+    title = scrapy.Field()
+    url = scrapy.Field()
+    author = scrapy.Field()
+    publication_date = scrapy.Field()
+    content = scrapy.Field()
+    metadata_table = scrapy.Field()
